@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>The BayGMST statistical model</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/katex.min.js" data-external="1" defer integrity="sha256-bgI9WhLOPSUlPrdgHUg3rPIB2vq+D+mYkUTM3q0U8fw=" crossorigin="anonymous"></script>
+<script>document.addEventListener("DOMContentLoaded", function () {
+  var mathElements = document.getElementsByClassName("math");
+  var macros = [];
+  for (var i = 0; i < mathElements.length; i++) {
+    var texText = mathElements[i].firstChild;
+    if (mathElements[i].tagName == "SPAN") {
+      katex.render(texText.data, mathElements[i], {
+        displayMode: mathElements[i].classList.contains("display"),
+        throwOnError: false,
+        macros: macros,
+        fleqn: false
+      });
+    }}});
+</script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/katex.min.css" data-external="1">
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">The BayGMST statistical model</h1>
+
+
+
+<p>This vignette describes the statistical model implemented by
+<code>fit_baygmst()</code>, connecting the code to the underlying
+statistics and to the literature it descends from. For a hands-on
+walkthrough of the software, see
+<code>vignette(&quot;baygmst-intro&quot;, package = &quot;BayGMST&quot;)</code>.</p>
+<div id="background" class="section level2">
+<h2>Background</h2>
+<p>Global mean surface temperature (GMST) is a fundamental state
+variable of Earth’s climate system and a central target of paleoclimate
+reconstruction efforts. Because direct instrumental measurements extend
+back only about 150 years, estimates of GMST over longer periods must be
+inferred from indirect observations preserved in paleoclimate archives:
+tree rings, glacier ice, corals and sclerosponges, lake and marine
+sediments, and historical documents (Mann et al., 1999; Moberg et al.,
+2005). A variety of statistical strategies have been developed to
+extract the climate signal contained in these “proxies” (Tingley et al.,
+2012; Smerdon and Pollack, 2016), whether the target is a spatial
+climate field (Smerdon et al., 2023) or an aggregated index such as
+GMST.</p>
+</div>
+<div id="intellectual-ancestry" class="section level2">
+<h2>Intellectual ancestry</h2>
+<p>BayGMST’s inference framework builds directly on the work of Barboza
+et al. (2014, 2019) and Wang (2020), who utilized a reduced proxy
+Bayesian approach that leverages not only the climate proxy network, but
+also estimates of past forcings (e.g., greenhouse gas concentrations,
+solar, and volcanic activity), which are known to influence GMST. The
+model below is their hierarchical formulation; BayGMST packages it, with
+the implementation choices noted in this vignette.</p>
+</div>
+<div id="the-hierarchical-model" class="section level2">
+<h2>The hierarchical model</h2>
+<p>The approach is based on computing a “reduced proxy” <span class="math inline">\boldsymbol{P} = (P_1, \ldots, P_t, \ldots,
+P_n)^T</span>, an aggregate of the available paleoclimate proxy
+observations. Several methods exist to do so, like principal component
+regression, partial least squares, sliced inverse regression, or a
+simple composite (Barboza et al., 2019); see
+<code>reduce_proxies()</code> for the methods implemented here, and
+<code>as_baygmst_proxy()</code> for supplying a reduced or composited
+series built elsewhere. This quantity is then modeled as autoregressive
+and linearly dependent on the GMST, denoted <span class="math inline">\boldsymbol{T} = (T_1, \ldots, T_t, \ldots,
+T_n)^T</span> (subscript <span class="math inline">t</span> refers to
+time in years CE).</p>
+<p>The model’s <strong>data level</strong>:</p>
+<p><span class="math display">
+P_t = \phi_P P_{t-1} + \alpha_0 + \alpha_1 T_t + \sigma_P \epsilon_t,
+\qquad \epsilon_t \overset{\text{iid}}{\sim} N(0, 1)
+</span></p>
+<p>where <span class="math inline">\phi_P</span> denotes the lag-1
+autocorrelation of <span class="math inline">P</span>, the <span class="math inline">\alpha</span>’s are coefficients, and <span class="math inline">\sigma_P</span> controls the amplitude of the
+unit-variance noise term <span class="math inline">\epsilon</span>.</p>
+<p>The <strong>process level</strong> models <span class="math inline">T_t</span> as autoregressive and linearly dependent
+on the climate forcings <span class="math inline">G_t</span> (greenhouse
+gas concentrations), <span class="math inline">V_t</span> (related to
+volcanic aerosol optical depth), and <span class="math inline">S_t</span> (solar irradiance), already transformed
+as described below (see <code>transform_forcings()</code>):</p>
+<p><span class="math display">
+T_t = \phi_T T_{t-1} + \beta_0 + \beta_G G_t + \beta_V V_t + \beta_S S_t
+  + \sigma_T \eta_t,
+\qquad \eta_t \overset{\text{iid}}{\sim} N(0, 1)
+</span></p>
+<p>where <span class="math inline">\phi_T</span> denotes the lag-1
+autocorrelation of <span class="math inline">\boldsymbol{T}</span>, the
+<span class="math inline">\beta</span>’s are constant coefficients, and
+<span class="math inline">\sigma_T</span> governs the amplitude of <span class="math inline">\eta_t</span>. Gaussian white noise for both <span class="math inline">\boldsymbol{\eta}</span> and <span class="math inline">\boldsymbol{\epsilon}</span> provides good results
+(Wang, 2020). Here <span class="math inline">|\phi_P|, |\phi_T| &lt;
+1</span> and <span class="math inline">\sigma_P, \sigma_T &gt;
+0</span>.</p>
+<p>Missing (pre-instrumental) temperatures are treated as parameters and
+estimated jointly with the model parameters, so the posterior yields
+both the reconstruction and its uncertainty.</p>
+</div>
+<div id="mapping-to-the-code" class="section level2">
+<h2>Mapping to the code</h2>
+<table>
+<colgroup>
+<col width="33%" />
+<col width="33%" />
+<col width="33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Notation</th>
+<th>Stan parameter</th>
+<th>R argument / role</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">T_t</span></td>
+<td><code>y</code> (transformed parameter)</td>
+<td><code>instrumental_T</code> (observed part), <code>y_mis</code>
+(reconstructed part)</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">P_t</span></td>
+<td><code>z</code> (data)</td>
+<td><code>proxy</code>, see <code>reduce_proxies()</code> /
+<code>as_baygmst_proxy()</code></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\phi_P</span></td>
+<td><code>phi_R</code></td>
+<td></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\sigma_P</span></td>
+<td><code>sigma_z</code></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\alpha_0, \alpha_1</span></td>
+<td><code>alpha0</code>, <code>alpha1</code></td>
+<td></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\phi_T</span></td>
+<td><code>phi_T</code></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\sigma_T</span></td>
+<td><code>sigma_y</code></td>
+<td></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\beta_0, \beta_G, \beta_V,
+\beta_S</span></td>
+<td><code>beta0</code>, <code>betaG</code>, <code>betaV</code>,
+<code>betaS</code></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">G_t, V_t, S_t</span></td>
+<td><code>G</code>, <code>V</code>, <code>S</code> (data)</td>
+<td><code>forcing_G</code>, <code>forcing_V</code>,
+<code>forcing_S</code></td>
+</tr>
+</tbody>
+</table>
+<p>Note on naming: the Stan code calls the proxy-equation parameters
+<code>phi_R</code> and <code>sigma_z</code> (“R” for “reduced proxy”,
+matching this implementation’s single-series design); this vignette
+writes them <span class="math inline">\phi_P</span> and <span class="math inline">\sigma_P</span> for readability. They are the same
+quantities.</p>
+</div>
+<div id="priors" class="section level2">
+<h2>Priors</h2>
+<p>As specified in the Stan model’s <code>model</code> block (weakly
+informative):</p>
+<p><span class="math display">
+\begin{aligned}
+\alpha_0, \alpha_1, \beta_0, \beta_G, \beta_V, \beta_S &amp;\sim N(0,
+0.5) \\
+\phi_P, \phi_T &amp;\sim N(0, 0.3) \\
+\sigma_P, \sigma_T &amp;\sim \text{Exponential}(1)
+\end{aligned}
+</span></p>
+<p>Because the data level estimates its own intercept <span class="math inline">\alpha_0</span> and slope <span class="math inline">\alpha_1</span>, the proxy series does not need to
+be pre-calibrated to temperature units; these priors do, however, assume
+<span class="math inline">P_t</span> is on roughly unit scale (a
+standardized composite or a temperature-anomaly-scale series). See
+<code>as_baygmst_proxy()</code>.</p>
+</div>
+<div id="forcing-data" class="section level2">
+<h2>Forcing data</h2>
+<p>Per Barboza et al. (2019, section 2.3), the three external forcings
+used in this family of models are:</p>
+<ul>
+<li><strong>Volcanic forcing</strong> (<span class="math inline">V_t</span>): zonal-mean stratospheric aerosol
+optical depth at 550 nm from the eVolv2k dataset (Toohey and Sigl,
+2017), covering 500 BCE to 1900 CE, area-weighted and averaged to a
+global annual estimate.</li>
+<li><strong>Solar forcing</strong> (<span class="math inline">S_t</span>): total solar irradiance from the
+SATIRE-H reconstruction (Vieira et al., 2011), decadal before 1940 CE
+and daily thereafter, interpolated to annual resolution.</li>
+<li><strong>Greenhouse-gas forcing</strong> (<span class="math inline">G_t</span>): hemispheric-mean atmospheric CO2 mole
+fraction (ppm) at annual resolution (Meinshausen et al., 2017), extended
+further back using ice-core-based compilations such as the PMIP4-CMIP6
+<code>past1000</code> forcing set (Jungclaus et al., 2017).</li>
+</ul>
+<p>All these series measure perturbation to the top of the atmosphere
+energy budget, and are thus expressed in <span class="math inline">\mathrm{W\,m^{-2}}</span>, following the climate
+science convention. To effect the conversion from the original units
+(aerosol optical depth for <span class="math inline">V_t</span>; mole
+fraction for <span class="math inline">G_t</span>),
+<code>transform_forcings()</code> implements</p>
+<p><span class="math display">
+G&#39;_t = \texttt{co2\_coef} \times \log(G_t / \texttt{co2\_c0}),
+\qquad
+V&#39;_t = -\lvert\texttt{vol\_coef}\rvert \,(1 - e^{-V_t}),
+</span></p>
+<p>where <code>co2_coef = 5.35</code> is the simplified CO2 radiative
+forcing coefficient of Myhre et al. (1998), adopted throughout the IPCC
+assessment reports; <code>co2_c0 = 280</code> ppm is the standard
+pre-industrial atmospheric CO2 reference concentration; and
+<code>vol_coef = 25</code> is the stratospheric aerosol optical
+depth-to-forcing scaling factor (in <span class="math inline">\mathrm{W\,m^{-2}}</span> per unit optical depth)
+used in IPCC AR5, traced to the GISS ModelE lineage of Hansen et
+al. (2005). Solar irradiance is simply centered on its own mean, <span class="math inline">S&#39;_t = S_t - \bar{S}</span>. These physically
+motivated formulations are a slight departure from the transformations
+used by Barboza et al. (2014, 2019).</p>
+</div>
+<div id="modeling-assumptions-worth-knowing" class="section level2">
+<h2>Modeling assumptions worth knowing</h2>
+<ul>
+<li><strong>The instrumental period is treated as error-free.</strong>
+In <code>baygmst.stan</code>, the latent temperature state is set
+exactly equal to the raw instrumental values for observed years; there
+is no separate instrumental measurement-noise parameter. Keep this in
+mind when interpreting instrumental-period fit statistics from
+<code>summary()</code> on a fitted model.</li>
+<li><strong>Cross-validation metrics are fully Bayesian.</strong>
+<code>cv_baygmst()</code> reports the posterior mean of the
+Stan-computed <code>r2_cv</code>/<code>mse_cv</code> generated
+quantities, which is close to, but not identical to, a plug-in
+point-estimate <span class="math inline">R^2</span> computed from the
+posterior-mean reconstruction.</li>
+<li><strong>Compositing uncertainty is not yet propagated.</strong> When
+the proxy input comes from an ensemble (e.g. a composite ensemble
+supplied via <code>as_baygmst_proxy()</code>), the ensemble is collapsed
+to a single series before fitting in this release.</li>
+</ul>
+</div>
+<div id="references" class="section level2">
+<h2>References</h2>
+<ul>
+<li>Barboza, L., B. Li, M. P. Tingley, and F. G. Viens (2014),
+Reconstructing past temperatures from natural proxies and estimated
+climate forcings using short- and long-memory models, <em>The Annals of
+Applied Statistics</em>, 8(4), 1966-2001, <a href="doi:10.1214/14-AOAS785" class="uri">doi:10.1214/14-AOAS785</a>.</li>
+<li>Barboza, L. A., J. Emile-Geay, B. Li, and W. He (2019), Efficient
+reconstructions of common era climate via integrated nested Laplace
+approximations, <em>Journal of Agricultural, Biological, and
+Environmental Statistics</em>, 24(3), 535-554, <a href="doi:10.1007/s13253-019-00372-4" class="uri">doi:10.1007/s13253-019-00372-4</a>.</li>
+<li>Hansen, J., et al. (2005), Efficacy of climate forcings, <em>J.
+Geophys. Res. (Atm)</em>, 110(D9), 18104+, <a href="doi:10.1029/2005JD005776" class="uri">doi:10.1029/2005JD005776</a>.</li>
+<li>Jungclaus, J. H., et al. (2017), The PMIP4 contribution to CMIP6,
+Part 3: The last millennium, scientific objective, and experimental
+design for the PMIP4 past1000 simulations, <em>Geoscientific Model
+Development</em>, 10(11), 4005-4033, <a href="doi:10.5194/gmd-10-4005-2017" class="uri">doi:10.5194/gmd-10-4005-2017</a>.</li>
+<li>Mann, M. E., R. S. Bradley, and M. K. Hughes (1999), Northern
+hemisphere temperatures during the past millennium: Inferences,
+uncertainties, and limitations, <em>Geophysical Research Letters</em>,
+26(6), 759-762, <a href="doi:10.1029/1999GL900070" class="uri">doi:10.1029/1999GL900070</a>.</li>
+<li>Meinshausen, M., et al. (2017), Historical greenhouse gas
+concentrations for climate modelling (CMIP6), <em>Geoscientific Model
+Development</em>, 10(5), 2057-2116, <a href="doi:10.5194/gmd-10-2057-2017" class="uri">doi:10.5194/gmd-10-2057-2017</a>.</li>
+<li>Moberg, A., D. M. Sonechkin, K. Holmgren, N. M. Datsenko, and W.
+Karlén (2005), Highly variable Northern Hemisphere temperatures
+reconstructed from low- and high-resolution proxy data, <em>Nature</em>,
+433(7026), 613-617, <a href="doi:10.1038/nature03265" class="uri">doi:10.1038/nature03265</a>.</li>
+<li>Myhre, G., E. J. Highwood, K. P. Shine, and F. Stordal (1998), New
+estimates of radiative forcing due to well mixed greenhouse gases,
+<em>Geophysical Research Letters</em>, 25(14), 2715-2718, <a href="doi:10.1029/98GL01908" class="uri">doi:10.1029/98GL01908</a>.</li>
+<li>Smerdon, J. E., and H. N. Pollack (2016), Reconstructing earth’s
+surface temperature over the past 2000 years: the science behind the
+headlines, <em>WIREs Climate Change</em>, 7(5), 746-771, <a href="doi:10.1002/wcc.418" class="uri">doi:10.1002/wcc.418</a>.</li>
+<li>Smerdon, J. E., E. R. Cook, and N. J. Steiger (2023), The historical
+development of large-scale paleoclimate field reconstructions over the
+common era, <em>Reviews of Geophysics</em>, 61(4), e2022RG000782, <a href="doi:10.1029/2022RG000782" class="uri">doi:10.1029/2022RG000782</a>.</li>
+<li>Tingley, M. P., P. F. Craigmile, M. Haran, B. Li, E. Mannshardt, and
+B. Rajaratnam (2012), Piecing together the past: statistical insights
+into paleoclimatic reconstructions, <em>Quaternary Science Reviews</em>,
+35, 1-22, <a href="doi:10.1016/j.quascirev.2012.01.012" class="uri">doi:10.1016/j.quascirev.2012.01.012</a>.</li>
+<li>Toohey, M., and M. Sigl (2017), Volcanic stratospheric sulfur
+injections and aerosol optical depth from 500 BCE to 1900 CE, <em>Earth
+System Science Data</em>, 9(2), 809-831, <a href="doi:10.5194/essd-9-809-2017" class="uri">doi:10.5194/essd-9-809-2017</a>.</li>
+<li>Vieira, L. E. A., S. K. Solanki, N. A. Krivova, and I. Usoskin
+(2011), Evolution of the solar irradiance during the Holocene,
+<em>Astron. &amp; Astrophys.</em>, 531, A6, <a href="doi:10.1051/0004-6361/201015843" class="uri">doi:10.1051/0004-6361/201015843</a>.</li>
+<li>Wang, H. (2020), Wiener-chaos analysis on Bayesian models with
+applications in agriculture and climatology, Ph.D. dissertation,
+Michigan State University, East Lansing, MI, <a href="doi:10.25335/vb7s-rh49" class="uri">doi:10.25335/vb7s-rh49</a>.</li>
+</ul>
+</div>
+
+
+
+<!-- code folding -->
+
+
+
+</body>
+</html>
